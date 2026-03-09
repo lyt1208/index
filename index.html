@@ -1,416 +1,470 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Calendar Todo</title>
 
 <style>
 
 body{
 font-family:Arial;
-margin:20px;
+margin:0;
+padding:10px;
+background:#f5f5f5;
 }
 
-#calendar{
+.container{
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+@media(min-width:800px){
+.container{
+flex-direction:row;
+}
+}
+
+.calendar{
+flex:3;
+background:white;
+padding:10px;
+border-radius:10px;
+}
+
+.todo{
+flex:1;
+background:white;
+padding:10px;
+border-radius:10px;
+}
+
+.grid{
 display:grid;
 grid-template-columns:repeat(7,1fr);
-gap:6px;
+gap:5px;
 }
 
 .day{
-border:1px solid #ccc;
-min-height:100px;
-padding:5px;
+background:#fafafa;
+border-radius:6px;
+min-height:90px;
+padding:4px;
+display:flex;
+flex-direction:column;
 }
 
 .date{
-font-size:12px;
-color:gray;
+font-size:14px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.tasks{
+flex:1;
 cursor:pointer;
 }
 
 .task{
-display:inline-flex;
-align-items:center;
-gap:4px;
-
 padding:2px 6px;
-border-radius:6px;
-
+margin:2px 0;
+border-radius:4px;
 font-size:12px;
-cursor:grab;
-
-user-select:none;
--webkit-user-select:none;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
-.task span{
+.task button{
+border:none;
+background:none;
 cursor:pointer;
 font-size:12px;
 }
 
-#inbox{
-
-margin-top:20px;
-border:2px dashed #aaa;
-padding:10px;
-
+.todo-list{
 display:flex;
 flex-wrap:wrap;
 gap:6px;
-
 }
 
-.popup{
+.todo-item{
+padding:4px 8px;
+border-radius:4px;
+cursor:pointer;
+font-size:13px;
+}
 
+.colors{
+display:flex;
+gap:5px;
+margin-top:10px;
+}
+
+.color{
+width:24px;
+height:24px;
+border-radius:4px;
+cursor:pointer;
+border:2px solid transparent;
+}
+
+.color.active{
+border:2px solid black;
+}
+
+.modal{
 position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
 
+.modal-content{
 background:white;
 padding:20px;
-border:1px solid #ccc;
-
-box-shadow:0 0 10px rgba(0,0,0,0.2);
-
-}
-
-@media (max-width:600px){
-
-body{
-margin:10px;
-}
-
-.day{
-min-height:80px;
-}
-
-.task{
-font-size:11px;
-}
-
+border-radius:10px;
+width:90%;
+max-width:400px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<h2 id="month"></h2>
+<div class="container">
 
-<button onclick="prevMonth()">←</button>
-<button onclick="nextMonth()">→</button>
+<div class="calendar">
 
-<div id="calendar"></div>
+<h3 id="month"></h3>
 
-<h3>待办任务</h3>
+<div class="grid" id="calendar"></div>
 
-<input id="taskInput">
+</div>
 
-<select id="colorInput">
 
-<option value="#4CAF50">🟢</option>
-<option value="#2196F3">🔵</option>
-<option value="#FF9800">🟠</option>
-<option value="#9C27B0">🟣</option>
-<option value="#F44336">🔴</option>
+<div class="todo">
 
-</select>
+<h3>待办箱</h3>
 
-<button onclick="addTask()">添加</button>
+<input id="todoInput" placeholder="输入任务">
+<button onclick="addTodo()">添加</button>
 
-<div id="inbox"></div>
+<div class="todo-list" id="todoList"></div>
+
+<div class="colors">
+<div class="color active" style="background:#ff6b6b" onclick="selectColor('#ff6b6b',this)"></div>
+<div class="color" style="background:#4dabf7" onclick="selectColor('#4dabf7',this)"></div>
+<div class="color" style="background:#51cf66" onclick="selectColor('#51cf66',this)"></div>
+<div class="color" style="background:#ffd43b" onclick="selectColor('#ffd43b',this)"></div>
+<div class="color" style="background:#b197fc" onclick="selectColor('#b197fc',this)"></div>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="modal" id="dayModal">
+<div class="modal-content">
+
+<h3 id="modalDate"></h3>
+
+<div id="modalTasks"></div>
+
+<input id="modalInput" placeholder="新任务">
+<button onclick="addModalTask()">添加</button>
+
+<button onclick="closeModal()">关闭</button>
+
+</div>
+</div>
+
+
 
 <script>
 
-let current=new Date()
+let currentColor="#ff6b6b"
 
-function renderCalendar(){
+let todos=JSON.parse(localStorage.getItem("todos")||"[]")
+let calendarTasks=JSON.parse(localStorage.getItem("calendarTasks")||"{}")
 
-let calendar=document.getElementById("calendar")
-calendar.innerHTML=""
+let selectedDate=null
 
-let y=current.getFullYear()
-let m=current.getMonth()
+function save(){
+localStorage.setItem("todos",JSON.stringify(todos))
+localStorage.setItem("calendarTasks",JSON.stringify(calendarTasks))
+}
 
-document.getElementById("month").innerText=y+"-"+(m+1)
+function selectColor(color,el){
 
-let firstDay=new Date(y,m,1).getDay()
-let days=new Date(y,m+1,0).getDate()
+currentColor=color
 
-for(let i=0;i<firstDay;i++) calendar.innerHTML+="<div></div>"
+document.querySelectorAll(".color").forEach(c=>c.classList.remove("active"))
 
-for(let d=1;d<=days;d++){
+el.classList.add("active")
 
-let key=`${y}-${m+1}-${d}`
+}
+
+function addTodo(){
+
+let text=document.getElementById("todoInput").value
+
+if(!text)return
+
+todos.push({text,color:currentColor})
+
+document.getElementById("todoInput").value=""
+
+save()
+
+renderTodos()
+
+}
+
+function renderTodos(){
+
+let box=document.getElementById("todoList")
+
+box.innerHTML=""
+
+todos.forEach((t,i)=>{
 
 let div=document.createElement("div")
-div.className="day"
-div.dataset.date=key
 
-div.onclick=(e)=>{
+div.className="todo-item"
 
-if(e.target.classList.contains("date")) return
+div.style.background=t.color
 
-let text=prompt("任务内容")
-if(!text) return
+div.textContent=t.text
 
-let color=prompt("颜色(hex)", "#4CAF50")
+div.oncontextmenu=e=>{
 
-let data=getData()
+e.preventDefault()
 
-let id="task"+Date.now()
+if(confirm("移动到日历?")){
 
-data[id]={text,color,loc:key}
+chooseDate(i)
 
-saveData(data)
+}
+
+}
+
+box.appendChild(div)
+
+})
+
+}
+
+function chooseDate(index){
+
+let date=prompt("输入日期 YYYY-MM-DD")
+
+if(!date)return
+
+if(!calendarTasks[date])calendarTasks[date]=[]
+
+calendarTasks[date].push(todos[index])
+
+todos.splice(index,1)
+
+save()
+
+render()
+
+}
+
+function render(){
+
+renderTodos()
 
 renderCalendar()
 
 }
 
+function renderCalendar(){
+
+let cal=document.getElementById("calendar")
+
+cal.innerHTML=""
+
+let now=new Date()
+
+let year=now.getFullYear()
+
+let month=now.getMonth()
+
+document.getElementById("month").innerText=year+"-"+(month+1)
+
+let first=new Date(year,month,1).getDay()
+
+let days=new Date(year,month+1,0).getDate()
+
+for(let i=0;i<first;i++){
+
+cal.appendChild(document.createElement("div"))
+
+}
+
+for(let d=1;d<=days;d++){
+
+let dateStr=year+"-"+String(month+1).padStart(2,"0")+"-"+String(d).padStart(2,"0")
+
+let day=document.createElement("div")
+
+day.className="day"
+
 let date=document.createElement("div")
+
 date.className="date"
-date.innerText=d
 
-date.onclick=(e)=>{
+date.textContent=d
 
-e.stopPropagation()
+date.onclick=()=>openModal(dateStr)
 
-showDayTasks(key)
+let tasksDiv=document.createElement("div")
+
+tasksDiv.className="tasks"
+
+tasksDiv.onclick=()=>addCalendarTask(dateStr)
+
+if(calendarTasks[dateStr]){
+
+calendarTasks[dateStr].forEach((t,i)=>{
+
+let task=document.createElement("div")
+
+task.className="task"
+
+task.style.background=t.color
+
+task.innerHTML=`${t.text} <span><button onclick="editTask('${dateStr}',${i})">✏️</button><button onclick="deleteTask('${dateStr}',${i})">❌</button></span>`
+
+tasksDiv.appendChild(task)
+
+})
 
 }
 
-div.appendChild(date)
+day.appendChild(date)
 
-calendar.appendChild(div)
+day.appendChild(tasksDiv)
 
-}
-
-loadTasks()
+cal.appendChild(day)
 
 }
 
-function createTask(id,obj){
+}
+
+function addCalendarTask(date){
+
+let text=prompt("任务内容")
+
+if(!text)return
+
+if(!calendarTasks[date])calendarTasks[date]=[]
+
+calendarTasks[date].push({text,color:currentColor})
+
+save()
+
+render()
+
+}
+
+function deleteTask(date,i){
+
+calendarTasks[date].splice(i,1)
+
+save()
+
+render()
+
+}
+
+function editTask(date,i){
+
+let text=prompt("修改任务",calendarTasks[date][i].text)
+
+if(!text)return
+
+calendarTasks[date][i].text=text
+
+save()
+
+render()
+
+}
+
+function openModal(date){
+
+selectedDate=date
+
+document.getElementById("dayModal").style.display="flex"
+
+document.getElementById("modalDate").innerText=date
+
+renderModal()
+
+}
+
+function renderModal(){
+
+let box=document.getElementById("modalTasks")
+
+box.innerHTML=""
+
+let tasks=calendarTasks[selectedDate]||[]
+
+tasks.forEach(t=>{
 
 let div=document.createElement("div")
 
 div.className="task"
-div.style.background=obj.color
 
-div.draggable=true
+div.style.background=t.color
 
-div.ondragstart=(e)=>{
-e.dataTransfer.setData("id",id)
-}
+div.textContent=t.text
 
-let timer
+box.appendChild(div)
 
-div.ontouchstart=()=>{
-
-timer=setTimeout(()=>{
-
-chooseDate(id)
-
-},600)
+})
 
 }
 
-div.ontouchend=()=>clearTimeout(timer)
+function addModalTask(){
 
-div.innerHTML=`
+let text=document.getElementById("modalInput").value
 
-${obj.text}
+if(!text)return
 
-<span onclick="editTask('${id}')">✏️</span>
-<span onclick="deleteTask('${id}')">🗑</span>
+if(!calendarTasks[selectedDate])calendarTasks[selectedDate]=[]
 
-`
+calendarTasks[selectedDate].push({text,color:currentColor})
 
-return div
+document.getElementById("modalInput").value=""
 
-}
+save()
 
-function chooseDate(id){
+render()
 
-let date=prompt("输入日期 YYYY-M-D 或 inbox")
-
-if(!date) return
-
-let data=getData()
-
-data[id].loc=date
-
-saveData(data)
-
-renderCalendar()
+renderModal()
 
 }
 
-function loadTasks(){
+function closeModal(){
 
-let data=getData()
-
-let inbox=document.getElementById("inbox")
-inbox.innerHTML=""
-
-inbox.ondragover=e=>e.preventDefault()
-
-inbox.ondrop=e=>{
-
-let id=e.dataTransfer.getData("id")
-
-data[id].loc="inbox"
-
-saveData(data)
-
-renderCalendar()
+document.getElementById("dayModal").style.display="none"
 
 }
 
-for(let id in data){
-
-let task=createTask(id,data[id])
-
-if(data[id].loc=="inbox"){
-
-inbox.appendChild(task)
-
-}else{
-
-let day=document.querySelector(`[data-date="${data[id].loc}"]`)
-
-if(day){
-
-day.ondragover=e=>e.preventDefault()
-
-day.ondrop=e=>{
-
-let id=e.dataTransfer.getData("id")
-
-data[id].loc=day.dataset.date
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-day.appendChild(task)
-
-}
-
-}
-
-}
-
-}
-
-function showDayTasks(date){
-
-let data=getData()
-
-let popup=document.createElement("div")
-popup.className="popup"
-
-let html=`<h3>${date}</h3>`
-
-for(let id in data){
-
-if(data[id].loc==date){
-
-html+=`<div>${data[id].text}</div>`
-
-}
-
-}
-
-html+=`<br><button onclick="this.parentNode.remove()">关闭</button>`
-
-popup.innerHTML=html
-
-document.body.appendChild(popup)
-
-}
-
-function editTask(id){
-
-let data=getData()
-
-let text=prompt("修改任务",data[id].text)
-
-if(text) data[id].text=text
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-function deleteTask(id){
-
-let data=getData()
-
-delete data[id]
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-function addTask(){
-
-let text=document.getElementById("taskInput").value
-let color=document.getElementById("colorInput").value
-
-if(!text) return
-
-let id="task"+Date.now()
-
-let data=getData()
-
-data[id]={text,color,loc:"inbox"}
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-function getData(){
-
-return JSON.parse(localStorage.getItem("tasks")||"{}")
-
-}
-
-function saveData(data){
-
-localStorage.setItem("tasks",JSON.stringify(data))
-
-}
-
-function prevMonth(){
-
-current.setMonth(current.getMonth()-1)
-renderCalendar()
-
-}
-
-function nextMonth(){
-
-current.setMonth(current.getMonth()+1)
-renderCalendar()
-
-}
-
-renderCalendar()
+render()
 
 </script>
 
