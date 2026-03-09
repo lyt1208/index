@@ -1,63 +1,91 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta charset="UTF-8">
-<title>Calendar Todo V2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Calendar Todo</title>
 
 <style>
 
 body{
-    font-family:Arial;
-    margin:20px;
+font-family:Arial;
+margin:20px;
 }
 
 #calendar{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:6px;
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:5px;
 }
 
 .day{
-    border:1px solid #ccc;
-    min-height:120px;
-    padding:5px;
+border:1px solid #ccc;
+min-height:110px;
+padding:5px;
 }
 
 .date{
-    font-size:12px;
-    color:gray;
+font-size:12px;
+color:gray;
 }
 
 .task{
-    padding:3px;
-    margin:3px 0;
-    cursor:grab;
-    font-size:12px;
-    border-radius:4px;
-    color:white;
+padding:6px 10px;
+cursor:grab;
+font-size:12px;
+border-radius:20px;
+color:white;
+white-space:nowrap;
+max-width:120px;
+overflow:hidden;
+text-overflow:ellipsis;
+touch-action:none;
 }
 
 .done{
-    text-decoration:line-through;
-    opacity:0.6;
+text-decoration:line-through;
+opacity:0.6;
 }
 
 #inbox{
-    margin-top:20px;
-    border:2px dashed #aaa;
-    padding:10px;
-}
+margin-top:20px;
+border:2px dashed #aaa;
+padding:10px;
+min-height:60px;
 
-button{
-    margin:5px;
+display:flex;
+flex-wrap:wrap;
+gap:6px;
 }
 
 .task span{
-    margin-left:5px;
-    cursor:pointer;
+margin-left:6px;
+cursor:pointer;
+}
+
+@media (max-width:600px){
+
+body{
+margin:10px;
+}
+
+.day{
+min-height:80px;
+font-size:11px;
+}
+
+.task{
+font-size:11px;
+max-width:90px;
+}
+
 }
 
 </style>
+
 </head>
 
 <body>
@@ -72,194 +100,244 @@ button{
 <h3>待办任务</h3>
 
 <input id="taskInput" placeholder="任务">
-<input type="color" id="colorInput" value="#4CAF50">
+
+<select id="colorInput">
+
+<option value="#4CAF50">🟢</option>
+<option value="#2196F3">🔵</option>
+<option value="#FF9800">🟠</option>
+<option value="#9C27B0">🟣</option>
+<option value="#F44336">🔴</option>
+
+</select>
+
 <button onclick="addTask()">添加</button>
 
-<div id="inbox" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+<div id="inbox"></div>
 
 <script>
 
 let current=new Date()
+let draggedTask=null
 
 function renderCalendar(){
 
-    let calendar=document.getElementById("calendar")
-    calendar.innerHTML=""
+let calendar=document.getElementById("calendar")
+calendar.innerHTML=""
+document.getElementById("inbox").innerHTML=""
 
-    let y=current.getFullYear()
-    let m=current.getMonth()
+let y=current.getFullYear()
+let m=current.getMonth()
 
-    document.getElementById("month").innerText=y+"-"+(m+1)
+document.getElementById("month").innerText=y+"-"+(m+1)
 
-    let firstDay=new Date(y,m,1).getDay()
-    let days=new Date(y,m+1,0).getDate()
+let firstDay=new Date(y,m,1).getDay()
+let days=new Date(y,m+1,0).getDate()
 
-    for(let i=0;i<firstDay;i++){
-        calendar.innerHTML+="<div></div>"
-    }
+for(let i=0;i<firstDay;i++){
 
-    for(let d=1;d<=days;d++){
+calendar.innerHTML+="<div></div>"
 
-        let key=`${y}-${m+1}-${d}`
+}
 
-        let div=document.createElement("div")
-        div.className="day"
-        div.dataset.date=key
-        div.ondrop=drop
-        div.ondragover=allowDrop
+for(let d=1;d<=days;d++){
 
-        div.innerHTML=`<div class="date">${d}</div>`
+let key=`${y}-${m+1}-${d}`
 
-        calendar.appendChild(div)
-    }
+let div=document.createElement("div")
+div.className="day"
+div.dataset.date=key
 
-    loadTasks()
+div.ondragover=e=>e.preventDefault()
+
+div.ondrop=e=>{
+moveTask(key)
+}
+
+div.innerHTML=`<div class="date">${d}</div>`
+
+calendar.appendChild(div)
+
+}
+
+loadTasks()
+
 }
 
 function addTask(){
 
-    let text=document.getElementById("taskInput").value
-    let color=document.getElementById("colorInput").value
+let text=document.getElementById("taskInput").value
+let color=document.getElementById("colorInput").value
 
-    if(!text) return
+if(!text) return
 
-    let id="task"+Date.now()
+let id="task"+Date.now()
 
-    let data=getData()
+let data=getData()
 
-    data[id]={text,color,done:false,loc:"inbox"}
+data[id]={text,color,done:false,loc:"inbox"}
 
-    saveData(data)
+saveData(data)
 
-    document.getElementById("taskInput").value=""
+document.getElementById("taskInput").value=""
 
-    renderCalendar()
+renderCalendar()
+
 }
 
 function createTask(id,obj){
 
-    let div=document.createElement("div")
+let div=document.createElement("div")
 
-    div.className="task"
-    if(obj.done) div.classList.add("done")
+div.className="task"
 
-    div.style.background=obj.color
-    div.id=id
-    div.draggable=true
+if(obj.done) div.classList.add("done")
 
-    div.ondragstart=e=>{
-        e.dataTransfer.setData("id",id)
-    }
+div.style.background=obj.color
 
-    div.innerHTML=`
-    <input type="checkbox" ${obj.done?"checked":""}
-    onchange="toggleDone('${id}')">
+div.draggable=true
 
-    ${obj.text}
+div.id=id
 
-    <span onclick="editTask('${id}')">✏️</span>
-    <span onclick="deleteTask('${id}')">🗑</span>
-    `
-
-    return div
+div.ondragstart=()=>{
+draggedTask=id
 }
 
-function allowDrop(e){
-    e.preventDefault()
+div.ontouchstart=()=>{
+draggedTask=id
 }
 
-function drop(e){
+div.innerHTML=`
 
-    e.preventDefault()
+<input type="checkbox"
+${obj.done?"checked":""}
+onchange="toggleDone('${id}')">
 
-    let id=e.dataTransfer.getData("id")
+${obj.text}
 
-    let data=getData()
+<span onclick="editTask('${id}')">✏️</span>
+<span onclick="deleteTask('${id}')">🗑</span>
 
-    let loc=e.target.dataset?.date || "inbox"
+`
 
-    data[id].loc=loc
+return div
 
-    saveData(data)
+}
 
-    renderCalendar()
+function moveTask(loc){
+
+let data=getData()
+
+data[draggedTask].loc=loc
+
+saveData(data)
+
+renderCalendar()
+
 }
 
 function toggleDone(id){
 
-    let data=getData()
+let data=getData()
 
-    data[id].done=!data[id].done
+data[id].done=!data[id].done
 
-    saveData(data)
+saveData(data)
 
-    renderCalendar()
+renderCalendar()
+
 }
 
 function editTask(id){
 
-    let data=getData()
+let data=getData()
 
-    let text=prompt("修改任务",data[id].text)
+let text=prompt("修改任务",data[id].text)
 
-    if(text){
-        data[id].text=text
-    }
+if(text){
 
-    saveData(data)
+data[id].text=text
 
-    renderCalendar()
+}
+
+saveData(data)
+
+renderCalendar()
+
 }
 
 function deleteTask(id){
 
-    let data=getData()
+let data=getData()
 
-    delete data[id]
+delete data[id]
 
-    saveData(data)
+saveData(data)
 
-    renderCalendar()
-}
+renderCalendar()
 
-function getData(){
-    return JSON.parse(localStorage.getItem("tasks")||"{}")
-}
-
-function saveData(data){
-    localStorage.setItem("tasks",JSON.stringify(data))
 }
 
 function loadTasks(){
 
-    let data=getData()
+let data=getData()
 
-    for(let id in data){
+let inbox=document.getElementById("inbox")
 
-        let task=createTask(id,data[id])
+inbox.ondragover=e=>e.preventDefault()
 
-        if(data[id].loc=="inbox"){
+inbox.ondrop=()=>{
 
-            document.getElementById("inbox").appendChild(task)
+moveTask("inbox")
 
-        }else{
+}
 
-            let day=document.querySelector(`[data-date="${data[id].loc}"]`)
+for(let id in data){
 
-            if(day) day.appendChild(task)
+let task=createTask(id,data[id])
 
-        }
-    }
+if(data[id].loc=="inbox"){
+
+inbox.appendChild(task)
+
+}else{
+
+let day=document.querySelector(`[data-date="${data[id].loc}"]`)
+
+if(day) day.appendChild(task)
+
+}
+
+}
+
+}
+
+function getData(){
+
+return JSON.parse(localStorage.getItem("tasks")||"{}")
+
+}
+
+function saveData(data){
+
+localStorage.setItem("tasks",JSON.stringify(data))
+
 }
 
 function prevMonth(){
-    current.setMonth(current.getMonth()-1)
-    renderCalendar()
+
+current.setMonth(current.getMonth()-1)
+
+renderCalendar()
+
 }
 
 function nextMonth(){
-    current.setMonth(current.getMonth()+1)
-    renderCalendar()
+
+current.setMonth(current.getMonth()+1)
+
+renderCalendar()
+
 }
 
 renderCalendar()
