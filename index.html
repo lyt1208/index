@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>日历待办</title>
+<title>Todo Calendar</title>
 
 <style>
 
@@ -22,83 +22,81 @@ overflow-x:hidden;
 }
 
 body{
-padding:12px;
-padding-bottom:40px;
+padding:16px;
 }
 
-/* 顶部月份导航 */
 .header{
 display:flex;
 align-items:center;
-justify-content:center;
-margin-bottom:12px;
-position:relative;
+justify-content:space-between;
+margin-bottom:16px;
+padding:0 4px;
 }
 
 .month-nav{
 display:flex;
 align-items:center;
-gap:24px;
+gap:16px;
+flex:1;
+justify-content:center;
 }
 
 .nav-btn{
 background:none;
 border:none;
-font-size:32px;
+font-size:36px;
 color:#007aff;
 cursor:pointer;
-padding:8px 16px;
-border-radius:20px;
+padding:8px;
+border-radius:50%;
 transition:background 0.2s;
+width:48px;
+height:48px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.nav-btn:hover{
+background:rgba(0,122,255,0.1);
 }
 
 .nav-btn:active{
-background:rgba(0,122,255,0.15);
-}
-
-.today-btn{
-position:absolute;
-right:0;
-background:#f2f2f7;
-border:none;
-font-size:12px;
-color:#007aff;
-padding:6px 12px;
-border-radius:12px;
-font-weight:500;
-}
-
-.today-btn:active{
-background:#e5e5ea;
+background:rgba(0,122,255,0.2);
 }
 
 .current-month{
-font-size:20px;
+font-size:22px;
 font-weight:600;
 color:#000;
+text-align:center;
 }
 
-/* 星期头部 */
 .weekday-header{
 display:grid;
 grid-template-columns:repeat(7,1fr);
 gap:1px;
-margin-bottom:4px;
+margin-bottom:8px;
 }
 
 .weekday{
 text-align:center;
-font-size:10px;
+font-size:11px;
 color:#8e8e93;
 font-weight:600;
-padding:8px 0;
+padding:10px 0;
+text-transform:uppercase;
+letter-spacing:0.5px;
 }
 
-/* 日历 */
+.calendar-container{
+overflow-y:auto;
+}
+
 .calendar-grid{
 display:grid;
 grid-template-columns:repeat(7,1fr);
-gap:1px;
+gap:2px;
 background:#e5e5ea;
 border-radius:12px;
 overflow:hidden;
@@ -106,16 +104,27 @@ overflow:hidden;
 
 .calendar-day{
 background:#fff;
-min-height:calc((100vw - 48px) / 7);
+min-height:calc((100vw - 64px) / 7);
 padding:2px;
 display:flex;
 flex-direction:column;
 align-items:center;
 position:relative;
 cursor:pointer;
+transition:background 0.15s;
+overflow:hidden;
 }
 
-.calendar-day.other-month{
+.day-click-area{
+width:100%;
+height:100%;
+display:flex;
+flex-direction:column;
+align-items:center;
+flex:1;
+}
+
+.calendar-day:hover{
 background:#fafafa;
 }
 
@@ -127,101 +136,69 @@ color:#c7c7cc;
 background:#007aff;
 color:white;
 border-radius:50%;
-width:26px;
-height:26px;
+width:32px;
+height:32px;
 display:flex;
 align-items:center;
 justify-content:center;
-}
-
-.calendar-day.has-tasks::after{
-content:'';
-position:absolute;
-bottom:4px;
-width:4px;
-height:4px;
-background:#007aff;
-border-radius:50%;
 }
 
 .day-number{
-font-size:13px;
+font-size:15px;
 color:#000;
 font-weight:500;
-width:26px;
-height:26px;
+width:32px;
+height:32px;
 display:flex;
 align-items:center;
 justify-content:center;
-flex-shrink:0;
 }
 
-/* 任务容器 */
 .tasks-container{
 flex:1;
 width:100%;
 display:flex;
 flex-direction:column;
-gap:1px;
+gap:2px;
 overflow:hidden;
-max-height:45px;
 }
 
-/* 日历任务 - 更紧凑 */
-.calendar-task{
+.task{
+display:inline-block;
 color:white;
-padding:1px 4px;
-border-radius:3px;
-font-size:9px;
+padding:2px 6px;
+border-radius:4px;
+font-size:10px;
+cursor:grab;
 white-space:nowrap;
 overflow:hidden;
 text-overflow:ellipsis;
+max-width:auto;
 font-weight:500;
-line-height:1.2;
+user-select:none;
+-webkit-user-select:none;
+touch-action:none;
+}
+
+.task:active{
+cursor:grabbing;
 }
 
 /* 分类颜色 - iPhone日历风格 */
-.category-0{background:rgba(255,59,48,0.2);color:#ff3b30;}
-.category-1{background:rgba(255,149,0,0.2);color:#ff9500;}
-.category-2{background:rgba(255,204,0,0.2);color:#b39800;}
-.category-3{background:rgba(52,199,89,0.2);color:#34c759;}
-.category-4{background:rgba(0,122,255,0.2);color:#007aff;}
-.category-5{background:rgba(102,109,213,0.2);color:#666dd5;}
-.category-6{background:rgba(242,126,225,0.2);color:#f27ee1;}
+.category-0{background:rgba(255,59,48,0.15);color:#ff3b30;}
+.category-1{background:rgba(255,149,0,0.15);color:#ff9500;}
+.category-2{background:rgba(255,204,0,0.15);color:#ffcc00;}
+.category-3{background:rgba(52,199,89,0.15);color:#34c759;}
+.category-4{background:rgba(0,122,255,0.15);color:#007aff;}
+.category-5{background:rgba(102,109,213,0.15);color:#666dd5;}
+.category-6{background:rgba(242,126,225,0.15);color:#f27ee1;}
 
-/* 待办区域 */
-.todo-section{
-margin-top:16px;
-}
-
-.todo-header{
-display:flex;
-align-items:center;
-justify-content:space-between;
-margin-bottom:8px;
-}
-
-.section-title{
-font-size:13px;
-color:#8e8e93;
-font-weight:600;
-letter-spacing:0.5px;
-}
-
-.clear-btn{
-font-size:12px;
-color:#ff3b30;
-background:none;
-border:none;
-padding:4px 8px;
-}
-
-/* 添加任务输入框 */
-.input-area{
+#inputArea{
 background:white;
-border-radius:12px;
-padding:10px;
-box-shadow:0 1px 2px rgba(0,0,0,0.05);
+border-radius:14px;
+padding:12px;
+margin-top:16px;
+box-shadow:0 1px 3px rgba(0,0,0,0.1);
 }
 
 .task-input-row{
@@ -234,10 +211,10 @@ align-items:center;
 flex:1;
 border:none;
 outline:none;
-font-size:14px;
-padding:8px 10px;
+font-size:15px;
+padding:10px 12px;
 background:#f2f2f7;
-border-radius:8px;
+border-radius:10px;
 min-width:0;
 }
 
@@ -245,9 +222,9 @@ min-width:0;
 background:#007aff;
 color:white;
 border:none;
-padding:8px 16px;
-border-radius:8px;
-font-size:14px;
+padding:10px 18px;
+border-radius:10px;
+font-size:15px;
 font-weight:600;
 cursor:pointer;
 flex-shrink:0;
@@ -257,20 +234,24 @@ flex-shrink:0;
 opacity:0.7;
 }
 
-/* 分类选择器 */
+/* 分类颜色选择器 */
 .category-picker{
 display:flex;
-gap:4px;
+gap:5px;
 flex-shrink:0;
 }
 
 .category-option{
-width:22px;
-height:22px;
+width:26px;
+height:26px;
 border-radius:50%;
 cursor:pointer;
 border:2px solid transparent;
-transition:transform 0.15s;
+transition:transform 0.15s, border-color 0.15s;
+}
+
+.category-option:hover{
+transform:scale(1.1);
 }
 
 .category-option.selected{
@@ -278,81 +259,31 @@ border-color:#333;
 transform:scale(1.15);
 }
 
-/* 待办任务列表 */
+.section-title{
+font-size:12px;
+color:#8e8e93;
+font-weight:600;
+text-transform:uppercase;
+letter-spacing:0.5px;
+margin-bottom:10px;
+padding-left:4px;
+}
+
 #unscheduled{
 background:white;
-border-radius:12px;
-padding:10px;
-min-height:50px;
-box-shadow:0 1px 2px rgba(0,0,0,0.05);
+border-radius:14px;
+padding:12px;
+min-height:60px;
+margin-top:12px;
+box-shadow:0 1px 3px rgba(0,0,0,0.1);
 display:flex;
 flex-wrap:wrap;
 gap:6px;
-align-items:flex-start;
+align-items:center;
 }
 
-.todo-task{
-display:inline-block;
-color:white;
-padding:4px 10px;
-border-radius:6px;
-font-size:12px;
-white-space:nowrap;
-font-weight:500;
-user-select:none;
--webkit-user-select:none;
-touch-action:none;
-}
-
-.todo-task:active{
-opacity:0.7;
-}
-
-.empty-tip{
-color:#c7c7cc;
-font-size:13px;
-width:100%;
-text-align:center;
-padding:8px;
-}
-
-/* 备忘录 */
-.memo-section{
-background:white;
-border-radius:12px;
-padding:12px;
-margin-top:12px;
-box-shadow:0 1px 2px rgba(0,0,0,0.05);
-}
-
-.memo-header{
-font-size:13px;
-color:#8e8e93;
-font-weight:600;
-letter-spacing:0.5px;
-margin-bottom:8px;
-}
-
-.memo-textarea{
-width:100%;
-border:none;
-outline:none;
-font-size:13px;
-padding:8px;
-background:#f2f2f7;
-border-radius:8px;
-resize:none;
-font-family:inherit;
-line-height:1.5;
-min-height:60px;
-}
-
-.memo-textarea::placeholder{
-color:#c7c7cc;
-}
-
-/* 弹窗 */
-.popup-mask{
+/* 点击日期弹出的输入框 */
+.date-input-popup{
 position:fixed;
 top:0;
 left:0;
@@ -363,10 +294,10 @@ display:flex;
 align-items:center;
 justify-content:center;
 z-index:1000;
-padding:24px;
+padding:20px;
 }
 
-.popup-mask.hidden{
+.date-input-popup.hidden{
 display:none;
 }
 
@@ -375,24 +306,15 @@ background:white;
 border-radius:16px;
 padding:20px;
 width:100%;
-max-width:340px;
-box-shadow:0 10px 40px rgba(0,0,0,0.25);
+max-width:320px;
+box-shadow:0 10px 40px rgba(0,0,0,0.2);
 }
 
 .popup-title{
 font-size:16px;
 font-weight:600;
-margin-bottom:12px;
+margin-bottom:14px;
 text-align:center;
-color:#000;
-}
-
-.popup-subtitle{
-font-size:12px;
-color:#8e8e93;
-text-align:center;
-margin-top:4px;
-margin-bottom:12px;
 }
 
 .popup-input{
@@ -403,7 +325,7 @@ font-size:15px;
 padding:12px;
 background:#f2f2f7;
 border-radius:10px;
-margin-bottom:12px;
+margin-bottom:14px;
 }
 
 .popup-category-picker{
@@ -414,16 +336,21 @@ margin-bottom:14px;
 }
 
 .popup-category-option{
-width:28px;
-height:28px;
+width:30px;
+height:30px;
 border-radius:50%;
 cursor:pointer;
 border:2px solid transparent;
+transition:transform 0.15s, border-color 0.15s;
+}
+
+.popup-category-option:hover{
+transform:scale(1.1);
 }
 
 .popup-category-option.selected{
 border-color:#333;
-transform:scale(1.1);
+transform:scale(1.15);
 }
 
 .popup-buttons{
@@ -439,7 +366,6 @@ border-radius:10px;
 font-size:14px;
 font-weight:600;
 cursor:pointer;
-text-align:center;
 }
 
 .popup-btn-cancel{
@@ -452,66 +378,64 @@ background:#007aff;
 color:white;
 }
 
-/* 详情弹窗任务项 */
-.detail-task-item{
-display:flex;
-align-items:center;
-padding:8px;
-background:#f9f9f9;
-border-radius:8px;
-margin-bottom:6px;
+/* 备忘录区域 */
+.memo-section{
+background:white;
+border-radius:14px;
+padding:12px;
+margin-top:12px;
+box-shadow:0 1px 3px rgba(0,0,0,0.1);
 }
 
-.detail-task-item .task-text{
-flex:1;
-font-size:14px;
-color:#000;
-}
-
-.detail-delete-btn{
-background:none;
+.memo-textarea{
+width:100%;
 border:none;
-color:#ff3b30;
-font-size:18px;
-padding:4px 8px;
-cursor:pointer;
-opacity:0.6;
-}
-
-.detail-delete-btn:active{
-opacity:1;
-}
-
-.no-tasks{
-text-align:center;
-color:#c7c7cc;
-padding:20px;
+outline:none;
 font-size:14px;
+padding:10px;
+background:#f2f2f7;
+border-radius:10px;
+resize:none;
+font-family:inherit;
+line-height:1.5;
+min-height:80px;
 }
 
-/* 更多任务提示 */
-.more-tasks-hint{
-font-size:9px;
+.memo-textarea::placeholder{
 color:#8e8e93;
+}
+
+/* 垃圾桶 */
+.trash-zone{
+margin-top:16px;
+padding:16px;
 text-align:center;
-padding:2px;
+color:#ff3b30;
+background:#fff0f0;
+border-radius:12px;
+border:2px dashed #ff3b30;
+font-size:13px;
+transition:all 0.2s;
+}
+
+.trash-zone.drag-over{
+background:#ff3b30;
+color:white;
+transform:scale(1.02);
 }
 
 </style>
 </head>
 <body>
 
-<!-- 顶部导航 -->
 <div class="header">
 <div class="month-nav">
-<button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+<button class="nav-btn" onclick="changeMonth(-1)">‹</button>
 <span class="current-month" id="currentMonth"></span>
-<button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+<button class="nav-btn" onclick="changeMonth(1)">›</button>
 </div>
-<button class="today-btn" onclick="goToToday">今天</button>
 </div>
 
-<!-- 星期头部 -->
 <div class="weekday-header">
 <div class="weekday">一</div>
 <div class="weekday">二</div>
@@ -522,38 +446,40 @@ padding:2px;
 <div class="weekday">日</div>
 </div>
 
-<!-- 日历网格 -->
+<div class="calendar-container" id="calendarContainer">
 <div class="calendar-grid" id="calendar"></div>
-
-<!-- 待办区域 -->
-<div class="todo-section">
-<div class="todo-header">
-<span class="section-title">待办事项</span>
-<button class="clear-btn" onclick="clearAllTodos">清空</button>
 </div>
 
-<div class="input-area">
+<div id="inputArea">
 <div class="task-input-row">
-<input id="taskInput" placeholder="添加待办...">
+<input id="taskInput" placeholder="添加新任务...">
 <div class="category-picker" id="categoryPicker"></div>
 <button id="addBtn" onclick="addTask()">+</button>
 </div>
 </div>
 
-<div id="unscheduled"></div>
+<div class="section-title">待办任务</div>
+<div id="unscheduled"
+ondrop="drop(event)"
+ondragover="allowDrop(event)">
 </div>
 
 <!-- 备忘录 -->
+<div class="section-title">备忘录</div>
 <div class="memo-section">
-<div class="memo-header">备忘录</div>
-<textarea class="memo-textarea" id="memoInput" placeholder="记录想法、灵感..."></textarea>
+<textarea class="memo-textarea" id="memoInput" placeholder="记录一些想法、灵感或备注..."></textarea>
 </div>
 
-<!-- 弹窗 -->
-<div class="popup-mask hidden" id="datePopup">
+<!-- 垃圾桶 -->
+<div id="trashZone" class="trash-zone" ondragover="allowDrop(event)" ondrop="drop(event)">
+<span>🗑️ 拖到这里删除</span>
+</div>
+
+<!-- 点击日期弹出的输入框 -->
+<div class="date-input-popup hidden" id="datePopup">
 <div class="popup-content">
-<div class="popup-title" id="popupTitle"></div>
-<input class="popup-input" id="popupInput" placeholder="输入任务...">
+<div class="popup-title" id="popupTitle">添加任务</div>
+<input class="popup-input" id="popupInput" placeholder="输入任务内容...">
 <div class="popup-category-picker" id="popupCategoryPicker"></div>
 <div class="popup-buttons">
 <button class="popup-btn popup-btn-cancel" onclick="closePopup()">取消</button>
@@ -565,405 +491,444 @@ padding:2px;
 
 <script>
 
-const categoryColors = ['#ff3b30','#ff9500','#ffcc00','#34c759','#007aff','#666dd5','#f27ee1'];
+const categoryColors = [
+'#ff3b30', // 红色
+'#ff9500', // 橙色
+'#ffcc00', // 黄色
+'#34c759', // 绿色
+'#007aff', // 蓝色
+'#666dd5', // 紫色
+'#f27ee1'  // 粉色
+];
 
 let selectedCategory = 0;
 let popupSelectedCategory = 0;
 let tasks = [];
-let currentYear, currentMonth;
+let currentYear, currentMonth
 let popupDate = null;
-const weekStart = 1;
-const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const weekStart = 1
 
-let draggedTask = null;
+const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
 
-// 移动端拖拽
-let touchElement = null;
-let longPressTimer = null;
+let draggedTask = null
 
 function initCategoryPicker(){
-let picker = document.getElementById('categoryPicker');
+let picker = document.getElementById('categoryPicker')
 categoryColors.forEach((color, index) => {
-let dot = document.createElement('div');
-dot.className = 'category-option' + (index === 0 ? ' selected' : '');
-dot.style.background = color;
-dot.onclick = function(){ selectCategory(index); };
-picker.appendChild(dot);
-});
+let dot = document.createElement('div')
+dot.className = 'category-option' + (index === 0 ? ' selected' : '')
+dot.style.background = color
+dot.onclick = () => selectCategory(index)
+picker.appendChild(dot)
+})
 }
 
 function selectCategory(index){
-selectedCategory = index;
-document.querySelectorAll('.category-option').forEach(function(el, i){
-el.classList.toggle('selected', i === index);
-});
+selectedCategory = index
+document.querySelectorAll('.category-option').forEach((el, i) => {
+el.classList.toggle('selected', i === index)
+})
 }
 
 function initPopupCategoryPicker(){
-let picker = document.getElementById('popupCategoryPicker');
-picker.innerHTML = '';
-categoryColors.forEach(function(color, index){
-let dot = document.createElement('div');
-dot.className = 'popup-category-option' + (index === popupSelectedCategory ? ' selected' : '');
-dot.style.background = color;
-dot.onclick = function(){ selectPopupCategory(index); };
-picker.appendChild(dot);
-});
+let picker = document.getElementById('popupCategoryPicker')
+picker.innerHTML = ''
+categoryColors.forEach((color, index) => {
+let dot = document.createElement('div')
+dot.className = 'popup-category-option' + (index === popupSelectedCategory ? ' selected' : '')
+dot.style.background = color
+dot.onclick = () => selectPopupCategory(index)
+picker.appendChild(dot)
+})
 }
 
 function selectPopupCategory(index){
-popupSelectedCategory = index;
-document.querySelectorAll('.popup-category-option').forEach(function(el, i){
-el.classList.toggle('selected', i === index);
-});
+popupSelectedCategory = index
+document.querySelectorAll('.popup-category-option').forEach((el, i) => {
+el.classList.toggle('selected', i === index)
+})
 }
 
-// 移动端长按拖拽
-document.addEventListener('touchstart', function(e){
-touchElement = e.target.closest('.todo-task');
+function allowDrop(e){
+e.preventDefault()
+}
+
+function drag(e){
+draggedTask = e.target
+e.dataTransfer.effectAllowed = 'move'
+}
+
+let touchStartX, touchStartY, touchElement
+let longPressTimer = null
+
+function onTouchStart(e){
+let touch = e.touches[0]
+touchStartX = touch.clientX
+touchStartY = touch.clientY
+touchElement = e.target.closest('.task')
+
 if(touchElement){
 longPressTimer = setTimeout(function(){
 if(touchElement){
-draggedTask = touchElement;
-touchElement.style.opacity = '0.6';
-touchElement.style.transform = 'scale(1.05)';
+draggedTask = touchElement
+touchElement.style.opacity = '0.5'
+touchElement.style.transform = 'scale(1.1)'
 }
-}, 400);
+}, 500)
 }
-}, false);
+}
 
-document.addEventListener('touchmove', function(e){
+function onTouchMove(e){
 if(longPressTimer){
-clearTimeout(longPressTimer);
-longPressTimer = null;
+clearTimeout(longPressTimer)
+longPressTimer = null
 }
-if(draggedTask && touchElement){
-e.preventDefault();
-let touch = e.touches[0];
-touchElement.style.position = 'fixed';
-touchElement.style.left = (touch.clientX - 30) + 'px';
-touchElement.style.top = (touch.clientY - 12) + 'px';
-touchElement.style.zIndex = '1000';
-touchElement.style.pointerEvents = 'none';
-}
-}, false);
 
-document.addEventListener('touchend', function(e){
+if(draggedTask && touchElement){
+e.preventDefault()
+let touch = e.touches[0]
+touchElement.style.position = 'fixed'
+touchElement.style.left = (touch.clientX - 50) + 'px'
+touchElement.style.top = (touch.clientY - 15) + 'px'
+touchElement.style.zIndex = '1000'
+touchElement.style.pointerEvents = 'none'
+}
+}
+
+function onTouchEnd(e){
 if(longPressTimer){
-clearTimeout(longPressTimer);
-longPressTimer = null;
+clearTimeout(longPressTimer)
+longPressTimer = null
 }
+
 if(draggedTask && touchElement){
-touchElement.style.opacity = '1';
-touchElement.style.transform = 'none';
-touchElement.style.position = 'static';
-touchElement.style.zIndex = '';
-touchElement.style.pointerEvents = '';
+touchElement.style.opacity = '1'
+touchElement.style.transform = 'none'
+touchElement.style.position = 'static'
+touchElement.style.zIndex = ''
+touchElement.style.pointerEvents = ''
 
-let touch = e.changedTouches[0];
-let target = document.elementFromPoint(touch.clientX, touch.clientY);
+let touch = e.changedTouches[0]
+let target = document.elementFromPoint(touch.clientX, touch.clientY)
 
-// 检查是否放到日历格子上
-let dayEl = target ? target.closest('.calendar-day') : null;
-if(dayEl && dayEl.dataset.date){
-let taskId = parseInt(draggedTask.dataset.id);
-let task = tasks.find(function(t){ return t.id == taskId; });
+// 检查是否放到垃圾桶
+if(target && (target.id === 'trashZone' || target.closest('#trashZone'))){
+let taskId = parseInt(draggedTask.dataset.id)
+tasks = tasks.filter(t => t.id !== taskId)
+saveTasks()
+}else{
+// 检查是否放到日历格子
+while(target && !target.classList.contains('tasks-container') && target.id !== 'unscheduled'){
+target = target ? target.parentElement : null
+}
+
+if(target){
+target.appendChild(draggedTask)
+let taskId = draggedTask.dataset.id
+let task = tasks.find(t => t.id == taskId)
 if(task){
-task.date = dayEl.dataset.date;
-saveTasks();
+if(target.id === 'unscheduled'){
+task.date = null
+}else{
+let dayElement = target.closest('.calendar-day')
+if(dayElement){
+task.date = dayElement.dataset.date
+}
+}
+saveTasks()
+}
 }
 }
 
-draggedTask = null;
-touchElement = null;
+draggedTask = null
+touchElement = null
 }
-});
+}
 
-// 添加待办任务
+function drop(e){
+e.preventDefault()
+if(draggedTask){
+let target = e.target
+
+// 检查是否放到垃圾桶
+if(target && (target.id === 'trashZone' || target.closest('#trashZone'))){
+let taskId = parseInt(draggedTask.dataset.id)
+tasks = tasks.filter(t => t.id !== taskId)
+saveTasks()
+return
+}
+
+while(target && !target.classList.contains('tasks-container') && target.id !== 'unscheduled'){
+target = target.parentElement
+}
+if(target){
+target.appendChild(draggedTask)
+let taskId = draggedTask.dataset.id
+let task = tasks.find(t => t.id == taskId)
+if(task){
+if(target.id === 'unscheduled'){
+task.date = null
+}else{
+let dayElement = target.closest('.calendar-day')
+if(dayElement){
+task.date = dayElement.dataset.date
+}
+}
+saveTasks()
+}
+}
+}
+}
+
 function addTask(){
-let text = document.getElementById('taskInput').value.trim();
-if(!text) return;
+let text = document.getElementById("taskInput").value
+if(!text) return
 
+let taskId = Date.now()
 let task = {
-id: Date.now(),
+id: taskId,
 text: text,
 category: selectedCategory,
 date: null
-};
-
-tasks.push(task);
-saveTasks();
-document.getElementById('taskInput').value = '';
 }
 
-function createTaskElement(task, isCalendar){
-let el = document.createElement('div');
-el.className = isCalendar ? 'calendar-task category-' + task.category : 'todo-task category-' + task.category;
-el.innerText = task.text;
-el.dataset.id = task.id;
-if(!isCalendar){
-el.ondragstart = function(e){
-draggedTask = e.target;
-e.dataTransfer.effectAllowed = 'move';
-};
-}
-return el;
+tasks.push(task)
+saveTasks()
+
+let taskEl = createTaskElement(task)
+document.getElementById("unscheduled").appendChild(taskEl)
+
+document.getElementById("taskInput").value=""
 }
 
-// 切换月份
+function createTaskElement(task){
+let el = document.createElement("div")
+el.className = `task category-${task.category}`
+el.innerText = task.text
+el.draggable = true
+el.dataset.id = task.id
+el.ondragstart = drag
+return el
+}
+
 function changeMonth(delta){
-currentMonth += delta;
-if(currentMonth > 11){ currentMonth = 0; currentYear++; }
-else if(currentMonth < 0){ currentMonth = 11; currentYear--; }
-renderCalendar();
+currentMonth += delta
+if(currentMonth > 11){
+currentMonth = 0
+currentYear++
+}else if(currentMonth < 0){
+currentMonth = 11
+currentYear--
+}
+renderCalendar()
 }
 
-// 返回今天
-function goToToday(){
-let now = new Date();
-currentYear = now.getFullYear();
-currentMonth = now.getMonth();
-renderCalendar();
-}
-
-// 渲染日历
-function renderCalendar(){
-document.getElementById('currentMonth').innerText = currentYear + '年 ' + monthNames[currentMonth];
-
-let calendar = document.getElementById('calendar');
-calendar.innerHTML = '';
-
-let firstDay = new Date(currentYear, currentMonth, 1);
-let firstDayOfWeek = firstDay.getDay();
-let startOffset = (firstDayOfWeek - weekStart + 7) % 7;
-
-let prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-let totalCells = startOffset + daysInMonth;
-let weeksCount = Math.ceil(totalCells / 7);
-
-let today = new Date();
-let todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-
-for(let week = 0; week < weeksCount; week++){
-for(let day = 0; day < 7; day++){
-let cellIndex = week * 7 + day;
-let dayNum = cellIndex - startOffset + 1;
-
-let isOtherMonth = false;
-let displayNum = dayNum;
-
-if(dayNum < 1){
-displayNum = prevMonthLastDay + dayNum;
-isOtherMonth = true;
-}else if(dayNum > daysInMonth){
-displayNum = dayNum - daysInMonth;
-isOtherMonth = true;
-}
-
-let dateStr = '';
-let year = currentYear;
-let month = currentMonth;
-if(dayNum < 1){
-month = currentMonth - 1;
-if(month < 0){ month = 11; year--; }
-dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(displayNum).padStart(2,'0');
-}else if(dayNum > daysInMonth){
-month = currentMonth + 1;
-if(month > 11){ month = 0; year++; }
-dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(displayNum).padStart(2,'0');
-}else{
-dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
-}
-
-let isToday = (dateStr === todayStr);
-let dayTasks = tasks.filter(function(t){ return t.date === dateStr; });
-
-let dayEl = document.createElement('div');
-dayEl.className = 'calendar-day' + (isOtherMonth ? ' other-month' : '') + (isToday ? ' today' : '') + (dayTasks.length > 0 ? ' has-tasks' : '');
-dayEl.dataset.date = dateStr;
-
-// 点击数字查看详情
-let numberArea = document.createElement('div');
-numberArea.style.cssText = 'width:100%;display:flex;flex-direction:column;align-items:center;flex:1;';
-numberArea.onclick = function(e){
-e.stopPropagation();
-showDayDetail(dateStr);
-};
-
-let number = document.createElement('div');
-number.className = 'day-number';
-number.innerText = displayNum;
-numberArea.appendChild(number);
-
-// 任务区域 - 点击添加
-let tasksContainer = document.createElement('div');
-tasksContainer.className = 'tasks-container';
-tasksContainer.onclick = function(e){
-e.stopPropagation();
-showDatePopup(dateStr);
-};
-
-// 显示前2个任务
-dayTasks.slice(0, 2).forEach(function(task){
-let taskEl = createTaskElement(task, true);
-tasksContainer.appendChild(taskEl);
-});
-
-// 更多任务提示
-if(dayTasks.length > 2){
-let hint = document.createElement('div');
-hint.className = 'more-tasks-hint';
-hint.innerText = '+' + (dayTasks.length - 2);
-tasksContainer.appendChild(hint);
-}
-
-numberArea.appendChild(tasksContainer);
-dayEl.appendChild(numberArea);
-calendar.appendChild(dayEl);
-}
-}
-}
-
-// 显示日期详情
-function showDayDetail(dateStr){
-let dayTasks = tasks.filter(function(t){ return t.date === dateStr; });
-let date = new Date(dateStr);
-let title = date.getFullYear() + '年' + monthNames[date.getMonth()] + '月' + date.getDate() + '日';
-
-document.getElementById('popupTitle').innerHTML = title + '<div class="popup-subtitle">点击空白处添加新任务</div>';
-document.getElementById('popupInput').style.display = 'block';
-document.getElementById('popupInput').value = '';
-document.getElementById('popupInput').focus();
-document.getElementById('popupCategoryPicker').style.display = 'flex';
-
-// 显示任务列表
-let buttonsHtml = '<button class="popup-btn popup-btn-cancel" onclick="closePopup()">关闭</button><button class="popup-btn popup-btn-confirm" onclick="confirmAddTask()">添加</button>';
-document.querySelector('.popup-buttons').innerHTML = buttonsHtml;
-
-popupDate = dateStr;
-popupSelectedCategory = selectedCategory;
-initPopupCategoryPicker();
-document.getElementById('datePopup').classList.remove('hidden');
-}
-
-// 点击日期添加任务
+// 点击日期弹出输入框
 function showDatePopup(dateStr){
-popupDate = dateStr;
-popupSelectedCategory = selectedCategory;
-let date = new Date(dateStr);
-document.getElementById('popupTitle').innerHTML = date.getFullYear() + '年' + monthNames[date.getMonth()] + '月' + date.getDate() + '日';
-document.getElementById('popupInput').style.display = 'block';
-document.getElementById('popupInput').value = '';
-document.getElementById('popupInput').focus();
-document.getElementById('popupCategoryPicker').style.display = 'flex';
-document.querySelector('.popup-buttons').innerHTML = '<button class="popup-btn popup-btn-cancel" onclick="closePopup()">取消</button><button class="popup-btn popup-btn-confirm" onclick="confirmAddTask()">添加</button>';
-initPopupCategoryPicker();
-document.getElementById('datePopup').classList.remove('hidden');
+popupDate = dateStr
+popupSelectedCategory = selectedCategory // 使用当前选中的颜色
+let date = new Date(dateStr)
+let monthNamesCN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+document.getElementById('popupTitle').innerText = `${date.getFullYear()}年${monthNamesCN[date.getMonth()]}月${date.getDate()}日 添加任务`
+document.getElementById('popupInput').value = ''
+document.getElementById('datePopup').classList.remove('hidden')
+document.getElementById('popupInput').focus()
+initPopupCategoryPicker()
 }
 
 function closePopup(){
-document.getElementById('datePopup').classList.add('hidden');
-popupDate = null;
+document.getElementById('datePopup').classList.add('hidden')
+popupDate = null
 }
 
 function confirmAddTask(){
-let text = document.getElementById('popupInput').value.trim();
-if(!text || !popupDate) return;
+let text = document.getElementById('popupInput').value
+if(!text) return
 
+let taskId = Date.now()
 let task = {
-id: Date.now(),
+id: taskId,
 text: text,
 category: popupSelectedCategory,
 date: popupDate
-};
-
-tasks.push(task);
-saveTasks();
-closePopup();
-renderCalendar();
 }
 
-// 删除任务
-function deleteTask(taskId){
-tasks = tasks.filter(function(t){ return t.id !== taskId; });
-saveTasks();
-renderCalendar();
+tasks.push(task)
+saveTasks()
 
-// 如果详情弹窗还开着，刷新它
-if(popupDate && !document.getElementById('datePopup').classList.contains('hidden')){
-showDayDetail(popupDate);
-}
+let taskEl = createTaskElement(task)
+let dayEl = document.querySelector(`.calendar-day[data-date="${popupDate}"]`)
+if(dayEl){
+dayEl.querySelector('.tasks-container').appendChild(taskEl)
 }
 
-// 清空待办
-function clearAllTodos(){
-if(confirm('确定清空所有待办吗？')){
-tasks = tasks.filter(function(t){ return t.date !== null; });
-saveTasks();
+closePopup()
+}
+
+function renderCalendar(){
+document.getElementById("currentMonth").innerText = currentYear + '年 ' + monthNames[currentMonth]
+
+let calendar = document.getElementById("calendar")
+calendar.innerHTML = ''
+
+let firstDay = new Date(currentYear, currentMonth, 1)
+let firstDayOfWeek = firstDay.getDay()
+
+let startOffset = (firstDayOfWeek - weekStart + 7) % 7
+
+let prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate()
+let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+
+// 计算当月实际需要的周数
+let totalCells = startOffset + daysInMonth
+let weeksCount = Math.ceil(totalCells / 7)
+
+let today = new Date()
+let todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+
+for(let week = 0; week < weeksCount; week++){
+for(let day = 0; day < 7; day++){
+let cellIndex = week * 7 + day
+let dayNum = cellIndex - startOffset + 1
+
+let isOtherMonth = false
+let displayNum = dayNum
+
+if(dayNum < 1){
+displayNum = prevMonthLastDay + dayNum
+isOtherMonth = true
+}else if(dayNum > daysInMonth){
+displayNum = dayNum - daysInMonth
+isOtherMonth = true
+}
+
+let dateStr = ''
+let year = currentYear
+let month = currentMonth
+if(dayNum < 1){
+month = currentMonth - 1
+if(month < 0){month = 11; year--}
+dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(displayNum).padStart(2,'0')}`
+}else if(dayNum > daysInMonth){
+month = currentMonth + 1
+if(month > 11){month = 0; year++}
+dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(displayNum).padStart(2,'0')}`
+}else{
+dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`
+}
+
+let isToday = (dateStr === todayStr)
+
+let dayEl = createDayElement(displayNum, isOtherMonth, isToday, dateStr)
+
+let dayTasks = tasks.filter(t => t.date === dateStr)
+dayTasks.forEach(task => {
+let taskEl = createTaskElement(task)
+dayEl.querySelector('.tasks-container').appendChild(taskEl)
+})
+
+calendar.appendChild(dayEl)
 }
 }
 
-// 数据存储
+setTimeout(() => {
+let container = document.getElementById('calendarContainer')
+container.scrollTop = 100
+}, 100)
+}
+
+function createDayElement(dayNum, isOtherMonth, isToday, dateStr){
+let day = document.createElement("div")
+day.className = "calendar-day"
+if(isOtherMonth){
+day.classList.add("other-month")
+}
+if(isToday){
+day.classList.add("today")
+}
+day.dataset.date = dateStr
+
+// 点击日期弹出添加任务
+day.onclick = () => showDatePopup(dateStr)
+
+day.ondrop = drop
+day.ondragover = allowDrop
+
+let number = document.createElement("div")
+number.className = "day-number"
+number.innerText = dayNum
+
+let tasksContainer = document.createElement("div")
+tasksContainer.className = "tasks-container"
+
+day.appendChild(number)
+day.appendChild(tasksContainer)
+
+return day
+}
+
 function saveTasks(){
-localStorage.setItem('calendarTasks', JSON.stringify(tasks));
-updateUnscheduled();
+localStorage.setItem('calendarTasks', JSON.stringify(tasks))
+updateUnscheduled()
 }
 
 function loadTasks(){
-let saved = localStorage.getItem('calendarTasks');
+let saved = localStorage.getItem('calendarTasks')
 if(saved){
-tasks = JSON.parse(saved);
+tasks = JSON.parse(saved)
 }
-renderCalendar();
-updateUnscheduled();
+renderCalendar()
+updateUnscheduled()
 }
 
 function updateUnscheduled(){
-let el = document.getElementById('unscheduled');
-el.innerHTML = '';
-let unscheduledTasks = tasks.filter(function(t){ return !t.date; });
-if(unscheduledTasks.length === 0){
-el.innerHTML = '<div class="empty-tip">暂无待办</div>';
-}else{
-unscheduledTasks.forEach(function(task){
-let taskEl = createTaskElement(task, false);
-el.appendChild(taskEl);
-});
-}
+let unscheduledEl = document.getElementById("unscheduled")
+unscheduledEl.innerHTML = ''
+
+let unscheduledTasks = tasks.filter(t => !t.date)
+unscheduledTasks.forEach(task => {
+let taskEl = createTaskElement(task)
+unscheduledEl.appendChild(taskEl)
+})
 }
 
-// 备忘录
+// 备忘录相关
 function saveMemo(){
-localStorage.setItem('calendarMemo', document.getElementById('memoInput').value);
+let memo = document.getElementById('memoInput').value
+localStorage.setItem('calendarMemo', memo)
 }
 
 function loadMemo(){
-let memo = localStorage.getItem('calendarMemo');
+let memo = localStorage.getItem('calendarMemo')
 if(memo){
-document.getElementById('memoInput').value = memo;
+document.getElementById('memoInput').value = memo
 }
 }
 
 // 初始化
-let now = new Date();
-currentYear = now.getFullYear();
-currentMonth = now.getMonth();
+let now = new Date()
+currentYear = now.getFullYear()
+currentMonth = now.getMonth()
 
-initCategoryPicker();
-loadTasks();
-loadMemo();
+initCategoryPicker()
+loadTasks()
+loadMemo()
+
+// 移动端拖拽事件
+document.addEventListener('touchstart', onTouchStart, false)
+document.addEventListener('touchmove', onTouchMove, false)
+document.addEventListener('touchend', onTouchEnd, false)
 
 // 备忘录自动保存
-document.getElementById('memoInput').addEventListener('input', saveMemo);
+document.getElementById('memoInput').addEventListener('input', saveMemo)
 
-// 回车添加
-document.getElementById('popupInput').onkeydown = function(e){
-if(e.key === 'Enter') confirmAddTask();
-if(e.key === 'Escape') closePopup();
-};
+// 绑定回车键
+document.getElementById('popupInput').onkeydown = (e) => {
+if(e.key === 'Enter') confirmAddTask()
+if(e.key === 'Escape') closePopup()
+}
 
 </script>
+
 </body>
 </html>
