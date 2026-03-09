@@ -30,6 +30,7 @@ padding:5px;
 .date{
 font-size:12px;
 color:gray;
+cursor:pointer;
 }
 
 .task{
@@ -42,44 +43,40 @@ white-space:nowrap;
 max-width:120px;
 overflow:hidden;
 text-overflow:ellipsis;
-touch-action:none;
-}
 
-.done{
-text-decoration:line-through;
-opacity:0.6;
+user-select:none;
+-webkit-user-select:none;
 }
 
 #inbox{
 margin-top:20px;
 border:2px dashed #aaa;
 padding:10px;
-min-height:60px;
 
 display:flex;
 flex-wrap:wrap;
 gap:6px;
 }
 
-.task span{
-margin-left:6px;
-cursor:pointer;
+.popup{
+
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+
+background:white;
+border:1px solid #ccc;
+padding:20px;
+
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+
 }
 
 @media (max-width:600px){
 
-body{
-margin:10px;
-}
-
 .day{
 min-height:80px;
-font-size:11px;
-}
-
-.task{
-font-size:11px;
-max-width:90px;
 }
 
 }
@@ -99,7 +96,7 @@ max-width:90px;
 
 <h3>待办任务</h3>
 
-<input id="taskInput" placeholder="任务">
+<input id="taskInput">
 
 <select id="colorInput">
 
@@ -118,13 +115,13 @@ max-width:90px;
 <script>
 
 let current=new Date()
-let draggedTask=null
+let dragged=null
 
 function renderCalendar(){
 
 let calendar=document.getElementById("calendar")
+
 calendar.innerHTML=""
-document.getElementById("inbox").innerHTML=""
 
 let y=current.getFullYear()
 let m=current.getMonth()
@@ -134,11 +131,7 @@ document.getElementById("month").innerText=y+"-"+(m+1)
 let firstDay=new Date(y,m,1).getDay()
 let days=new Date(y,m+1,0).getDate()
 
-for(let i=0;i<firstDay;i++){
-
-calendar.innerHTML+="<div></div>"
-
-}
+for(let i=0;i<firstDay;i++) calendar.innerHTML+="<div></div>"
 
 for(let d=1;d<=days;d++){
 
@@ -148,13 +141,40 @@ let div=document.createElement("div")
 div.className="day"
 div.dataset.date=key
 
-div.ondragover=e=>e.preventDefault()
+div.onclick=(e)=>{
 
-div.ondrop=e=>{
-moveTask(key)
+if(e.target.classList.contains("date")) return
+
+let text=prompt("新增任务")
+
+if(!text) return
+
+let data=getData()
+
+let id="task"+Date.now()
+
+data[id]={text,color:"#4CAF50",loc:key}
+
+saveData(data)
+
+renderCalendar()
+
 }
 
-div.innerHTML=`<div class="date">${d}</div>`
+let date=document.createElement("div")
+
+date.className="date"
+date.innerText=d
+
+date.onclick=(e)=>{
+
+e.stopPropagation()
+
+showDayTasks(key)
+
+}
+
+div.appendChild(date)
 
 calendar.appendChild(div)
 
@@ -164,117 +184,23 @@ loadTasks()
 
 }
 
-function addTask(){
-
-let text=document.getElementById("taskInput").value
-let color=document.getElementById("colorInput").value
-
-if(!text) return
-
-let id="task"+Date.now()
-
-let data=getData()
-
-data[id]={text,color,done:false,loc:"inbox"}
-
-saveData(data)
-
-document.getElementById("taskInput").value=""
-
-renderCalendar()
-
-}
-
 function createTask(id,obj){
 
 let div=document.createElement("div")
 
 div.className="task"
 
-if(obj.done) div.classList.add("done")
-
 div.style.background=obj.color
+
+div.innerText=obj.text
 
 div.draggable=true
 
-div.id=id
+div.ondragstart=()=>dragged=id
 
-div.ondragstart=()=>{
-draggedTask=id
-}
-
-div.ontouchstart=()=>{
-draggedTask=id
-}
-
-div.innerHTML=`
-
-<input type="checkbox"
-${obj.done?"checked":""}
-onchange="toggleDone('${id}')">
-
-${obj.text}
-
-<span onclick="editTask('${id}')">✏️</span>
-<span onclick="deleteTask('${id}')">🗑</span>
-
-`
+div.ontouchstart=()=>dragged=id
 
 return div
-
-}
-
-function moveTask(loc){
-
-let data=getData()
-
-data[draggedTask].loc=loc
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-function toggleDone(id){
-
-let data=getData()
-
-data[id].done=!data[id].done
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-function editTask(id){
-
-let data=getData()
-
-let text=prompt("修改任务",data[id].text)
-
-if(text){
-
-data[id].text=text
-
-}
-
-saveData(data)
-
-renderCalendar()
-
-}
-
-function deleteTask(id){
-
-let data=getData()
-
-delete data[id]
-
-saveData(data)
-
-renderCalendar()
 
 }
 
@@ -284,17 +210,15 @@ let data=getData()
 
 let inbox=document.getElementById("inbox")
 
-inbox.ondragover=e=>e.preventDefault()
+inbox.innerHTML=""
 
-inbox.ondrop=()=>{
-
-moveTask("inbox")
-
-}
+inbox.onclick=()=>moveTask("inbox")
 
 for(let id in data){
 
 let task=createTask(id,data[id])
+
+task.onclick=()=>dragged=id
 
 if(data[id].loc=="inbox"){
 
@@ -309,6 +233,67 @@ if(day) day.appendChild(task)
 }
 
 }
+
+}
+
+function moveTask(loc){
+
+let data=getData()
+
+if(!dragged) return
+
+data[dragged].loc=loc
+
+saveData(data)
+
+renderCalendar()
+
+}
+
+function showDayTasks(date){
+
+let data=getData()
+
+let popup=document.createElement("div")
+
+popup.className="popup"
+
+let html=`<h3>${date}</h3>`
+
+for(let id in data){
+
+if(data[id].loc==date){
+
+html+=`<div>${data[id].text}</div>`
+
+}
+
+}
+
+html+=`<br><button onclick="this.parentNode.remove()">关闭</button>`
+
+popup.innerHTML=html
+
+document.body.appendChild(popup)
+
+}
+
+function addTask(){
+
+let text=document.getElementById("taskInput").value
+let color=document.getElementById("colorInput").value
+
+if(!text) return
+
+let id="task"+Date.now()
+
+let data=getData()
+
+data[id]={text,color,loc:"inbox"}
+
+saveData(data)
+
+renderCalendar()
 
 }
 
